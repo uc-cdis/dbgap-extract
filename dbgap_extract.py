@@ -48,7 +48,7 @@ def scrape(studies_to_scrape, output_filename):
         except Exception as e:
             logging.error("Failed to parse data from NIH endpoint. {}".format(e))
             exit()
-        
+
         study_accession = root.findall("Study")[0].attrib["accession"]
         sample_list_element = root.findall("Study")[0].findall("SampleList")[0]
         sample_elements = sample_list_element.findall("Sample")
@@ -141,7 +141,7 @@ def main():
 
     scrape(studies_to_scrape, output_filename)
 
-    logging.debug("All done.")
+    logging.debug("All done. Extracted elements to {}".format(output_filename))
 
 
 if __name__ == "__main__":
