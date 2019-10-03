@@ -105,6 +105,10 @@ def main():
         nargs="*",
         help="a space-separated array of study accessions",
     )
+    parser.add_argument(
+        "--output_filename",
+        help="optionally specify a name for the output file",
+    )
 
     args = parser.parse_args(sys.argv[1:])
 
@@ -114,13 +118,17 @@ def main():
             "Usage error. Run this script using one of the two below command forms:"
         )
         logging.debug(
-            "> python dbgapExtract.py --study_accession_list accession_1 accession_2 ...."
+            "> python dbgapExtract.py --study_accession_list accession_1 accession_2 .... [--output_filename file_out.tsv]"
         )
         logging.debug(
-            "> python dbgapExtract.py --study_accession_list_filename file.txt"
+            "> python dbgapExtract.py --study_accession_list_filename file.txt [--output_filename file_out.tsv]"
         )
         logging.debug("-------")
         exit(0)
+
+    output_filename = FILENAME + ".tsv"
+    if args.output_filename is not None:
+        output_filename = args.output_filename
 
     studies_to_scrape = []
     if args.study_accession_list is not None:
@@ -131,8 +139,6 @@ def main():
         studies_to_scrape = f.readlines()
         studies_to_scrape = list(map(lambda x: x.strip(), studies_to_scrape))
         f.close()
-
-    output_filename = FILENAME + ".tsv"
 
     logging.debug(
         "Extracting the below studies to {} \n".format(output_filename)
