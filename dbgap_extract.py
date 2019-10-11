@@ -87,11 +87,13 @@ def scrape(studies_to_scrape, output_filename):
                 logging.error(e)
         write_list_of_rows_to_tsv(sample_rows_to_write_for_this_study, output_filename)
 
+
 def write_list_of_rows_to_tsv(rows, output_filename):
     with open(output_filename, "a+") as out_file:
         tsv_writer = csv.writer(out_file, delimiter="\t")
         for row in rows:
             tsv_writer.writerow(row)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Generate dbgap extract file.")
@@ -105,8 +107,7 @@ def main():
         help="a space-separated array of study accessions",
     )
     parser.add_argument(
-        "--output_filename",
-        help="optionally specify a name for the output file",
+        "--output_filename", help="optionally specify a name for the output file"
     )
 
     args = parser.parse_args(sys.argv[1:])
@@ -129,11 +130,11 @@ def main():
     if args.output_filename is not None:
         output_filename = args.output_filename
         # Log to a file matching the filename-prefix supplied by the user.
-        LOG_FILE = output_filename.split('.')[0] + ".log"
-        fileh = logging.FileHandler(LOG_FILE, 'a')
+        LOG_FILE = output_filename.split(".")[0] + ".log"
+        fileh = logging.FileHandler(LOG_FILE, "a")
         log = logging.getLogger()
         for hdlr in log.handlers[:]:
-            if 'baseFilename' in dir(hdlr) and FILENAME in hdlr.baseFilename:
+            if "baseFilename" in dir(hdlr) and FILENAME in hdlr.baseFilename:
                 os.remove(hdlr.baseFilename)
                 log.removeHandler(hdlr)
         log.addHandler(fileh)
@@ -157,7 +158,11 @@ def main():
 
     scrape(studies_to_scrape, output_filename)
 
-    logging.debug("All done. Extracted elements to {}. Logged info to {}".format(output_filename, LOG_FILE))
+    logging.debug(
+        "All done. Extracted elements to {}. Logged info to {}".format(
+            output_filename, LOG_FILE
+        )
+    )
 
 
 if __name__ == "__main__":

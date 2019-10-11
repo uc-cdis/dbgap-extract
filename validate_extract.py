@@ -74,7 +74,11 @@ def main():
 
     for record in accessions_from_input:
         if record not in accessions_from_output:
-            print("Output is missing {}. \n\t > Check if records are missing here https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/GetSampleStatus.cgi?study_id={}&rettype=html".format(record, record))
+            print(
+                "Output is missing {}. \n\t > Check if records are missing here https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/GetSampleStatus.cgi?study_id={}&rettype=html".format(
+                    record, record
+                )
+            )
 
 
 if __name__ == "__main__":
