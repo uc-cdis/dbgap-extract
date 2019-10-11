@@ -50,7 +50,7 @@ def main():
         print("-------")
         print("Usage:")
         print(
-            "> python dbgapExtract.py --input_file <phs_list.txt> --output_file <dbgap_extract_file.tsv>"
+            "> python validate_extract.py --input_file <phs_list.txt> --output_file <dbgap_extract_file.tsv>"
         )
         print("-------")
         exit(0)

@@ -118,10 +118,10 @@ def main():
             "Usage error. Run this script using one of the two below command forms:"
         )
         logging.debug(
-            "> python dbgapExtract.py --study_accession_list accession_1 accession_2 .... [--output_filename file_out.tsv]"
+            "> python dbgap_extract.py --study_accession_list accession_1 accession_2 .... [--output_filename file_out.tsv]"
         )
         logging.debug(
-            "> python dbgapExtract.py --study_accession_list_filename file.txt [--output_filename file_out.tsv]"
+            "> python dbgap_extract.py --study_accession_list_filename file.txt [--output_filename file_out.tsv]"
         )
         logging.debug("-------")
         exit(0)
