@@ -2,7 +2,7 @@
 
 Usage of dbgap_extract.py:
 
-Either run this script using either a space-separated list of study accessions:
+Either run this script using a space-separated list of study accessions:
 
 `python dbgap_extract.py --study_accession_list accession_1 accession_2 .... [--output_filename file_out.tsv]`
 
