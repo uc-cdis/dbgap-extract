@@ -128,6 +128,7 @@ def main():
     output_filename = FILENAME + ".tsv"
     if args.output_filename is not None:
         output_filename = args.output_filename
+        # Log to a file matching the filename-prefix supplied by the user.
         LOG_FILE = output_filename.split('.')[0] + ".log"
         fileh = logging.FileHandler(LOG_FILE, 'a')
         log = logging.getLogger()
