@@ -5,11 +5,12 @@ import csv
 import sys
 from datetime import datetime
 import logging
+import os
 
 FILENAME = "extract-" + datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
 REQUEST_URL = "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/GetSampleStatus.cgi?study_id={}&rettype=xml"
-
-logging.basicConfig(filename=FILENAME + ".log", level=logging.DEBUG)
+LOG_FILE = FILENAME + ".log"
+logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -86,13 +87,11 @@ def scrape(studies_to_scrape, output_filename):
                 logging.error(e)
         write_list_of_rows_to_tsv(sample_rows_to_write_for_this_study, output_filename)
 
-
 def write_list_of_rows_to_tsv(rows, output_filename):
     with open(output_filename, "a+") as out_file:
         tsv_writer = csv.writer(out_file, delimiter="\t")
         for row in rows:
             tsv_writer.writerow(row)
-
 
 def main():
     parser = argparse.ArgumentParser(description="Generate dbgap extract file.")
@@ -129,6 +128,16 @@ def main():
     output_filename = FILENAME + ".tsv"
     if args.output_filename is not None:
         output_filename = args.output_filename
+        LOG_FILE = output_filename.split('.')[0] + ".log"
+        fileh = logging.FileHandler(LOG_FILE, 'a')
+        log = logging.getLogger()
+        for hdlr in log.handlers[:]:
+            if 'baseFilename' in dir(hdlr) and FILENAME in hdlr.baseFilename:
+                os.remove(hdlr.baseFilename)
+                log.removeHandler(hdlr)
+        log.addHandler(fileh)
+
+    logging.basicConfig(filename=FILENAME + ".log", level=logging.DEBUG)
 
     studies_to_scrape = []
     if args.study_accession_list is not None:
@@ -147,7 +156,7 @@ def main():
 
     scrape(studies_to_scrape, output_filename)
 
-    logging.debug("All done. Extracted elements to {}".format(output_filename))
+    logging.debug("All done. Extracted elements to {}. Logged info to {}".format(output_filename, LOG_FILE))
 
 
 if __name__ == "__main__":
