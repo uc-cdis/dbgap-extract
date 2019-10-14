@@ -12,20 +12,23 @@ REQUEST_URL = "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/GetSampleStatus
 LOG_FILE = FILENAME + ".log"
 logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG)
 
+
 def setup_logging(log_filename):
     global LOG_FILE
     os.remove(LOG_FILE)
     LOG_FILE = log_filename
     fileh = logging.FileHandler(LOG_FILE, "a")
     log = logging.getLogger()
-    for hdlr in log.handlers[:]:    
+    for hdlr in log.handlers[:]:
         log.removeHandler(hdlr)
     log.addHandler(fileh)
     log.addHandler(logging.StreamHandler(sys.stdout))
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+
 setup_logging(LOG_FILE)
+
 
 def scrape(studies_to_scrape, output_filename):
     study_data = {}
