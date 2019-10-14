@@ -11,10 +11,21 @@ FILENAME = "extract-" + datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
 REQUEST_URL = "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/GetSampleStatus.cgi?study_id={}&rettype=xml"
 LOG_FILE = FILENAME + ".log"
 logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG)
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
-logging.getLogger("requests").setLevel(logging.WARNING)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+def setup_logging(log_filename):
+    global LOG_FILE
+    os.remove(LOG_FILE)
+    LOG_FILE = log_filename
+    fileh = logging.FileHandler(LOG_FILE, "a")
+    log = logging.getLogger()
+    for hdlr in log.handlers[:]:    
+        log.removeHandler(hdlr)
+    log.addHandler(fileh)
+    log.addHandler(logging.StreamHandler(sys.stdout))
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+setup_logging(LOG_FILE)
 
 def scrape(studies_to_scrape, output_filename):
     study_data = {}
@@ -130,14 +141,8 @@ def main():
     if args.output_filename is not None:
         output_filename = args.output_filename
         # Log to a file matching the filename-prefix supplied by the user.
-        LOG_FILE = output_filename.split(".")[0] + ".log"
-        fileh = logging.FileHandler(LOG_FILE, "a")
-        log = logging.getLogger()
-        for hdlr in log.handlers[:]:
-            if "baseFilename" in dir(hdlr) and FILENAME in hdlr.baseFilename:
-                os.remove(hdlr.baseFilename)
-                log.removeHandler(hdlr)
-        log.addHandler(fileh)
+        new_log_file = output_filename.split(".")[0] + ".log"
+        setup_logging(new_log_file)
 
     logging.basicConfig(filename=FILENAME + ".log", level=logging.DEBUG)
 
