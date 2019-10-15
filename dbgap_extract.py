@@ -27,8 +27,6 @@ def setup_logging(log_filename):
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-setup_logging(LOG_FILE)
-
 def scrape(studies_to_scrape, output_filename):
     study_data = {}
     field_names = [
@@ -51,6 +49,9 @@ def scrape(studies_to_scrape, output_filename):
         "study_accession_with_consent",
         "study_with_consent",
     ]
+
+    if os.path.exists(output_filename):
+        os.remove(output_filename)
 
     write_list_of_rows_to_tsv([field_names], output_filename)
 
@@ -143,10 +144,12 @@ def main():
     if args.output_filename is not None:
         output_filename = args.output_filename
         # Log to a file matching the filename-prefix supplied by the user.
-        new_log_file = output_filename.split(".")[0] + ".log"
+        new_log_file = os.path.basename(output_filename).split(".")[0] + ".log"
         setup_logging(new_log_file)
+    else:
+        # Log to a time-stamped log file of the form extract-%m-%d-%Y-%H-%M-%S.log
+        setup_logging(LOG_FILE)
 
-    logging.basicConfig(filename=FILENAME + ".log", level=logging.DEBUG)
 
     studies_to_scrape = []
     if args.study_accession_list is not None:
