@@ -62,7 +62,7 @@ def scrape(studies_to_scrape, output_filename):
             root = ET.fromstring(r.text)
         except Exception as e:
             logging.error("Failed to parse data from NIH endpoint. {}".format(e))
-            exit()
+            exit(1)
 
         study_accession = root.findall("Study")[0].attrib["accession"]
         sample_list_element = root.findall("Study")[0].findall("SampleList")[0]
