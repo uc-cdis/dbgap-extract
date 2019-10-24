@@ -14,10 +14,13 @@ logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG)
 
 def setup_logging(log_filename):
     global LOG_FILE
+    LOG_FILE = log_filename
     if os.path.exists(LOG_FILE):
         os.remove(LOG_FILE)
-    LOG_FILE = log_filename
-    fileh = logging.FileHandler(LOG_FILE, "a")
+    directory = os.path.dirname(log_filename)
+    if directory is not None and directory != '' and not os.path.exists(directory):
+        os.makedirs(directory)
+    fileh = logging.FileHandler(log_filename, "a")
     log = logging.getLogger()
     for hdlr in log.handlers[:]:
         log.removeHandler(hdlr)
@@ -144,7 +147,9 @@ def main():
     if args.output_filename is not None:
         output_filename = args.output_filename
         # Log to a file matching the filename-prefix supplied by the user.
-        new_log_file = os.path.basename(output_filename).split(".")[0] + ".log"
+        new_log_file = output_filename.split(".")[0] + ".log"
+        if os.path.exists(LOG_FILE):
+            os.remove(LOG_FILE)
         setup_logging(new_log_file)
     else:
         # Log to a time-stamped log file of the form extract-%m-%d-%Y-%H-%M-%S.log
