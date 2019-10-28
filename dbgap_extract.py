@@ -12,13 +12,14 @@ REQUEST_URL = "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/GetSampleStatus
 LOG_FILE = FILENAME + ".log"
 logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG)
 
+
 def setup_logging(log_filename):
     global LOG_FILE
     LOG_FILE = log_filename
     if os.path.exists(LOG_FILE):
         os.remove(LOG_FILE)
     directory = os.path.dirname(log_filename)
-    if directory is not None and directory != '' and not os.path.exists(directory):
+    if directory is not None and directory != "" and not os.path.exists(directory):
         os.makedirs(directory)
     fileh = logging.FileHandler(log_filename, "a")
     log = logging.getLogger()
@@ -29,6 +30,7 @@ def setup_logging(log_filename):
     log.addHandler(logging.StreamHandler(sys.stdout))
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 
 def scrape(studies_to_scrape, output_filename):
     study_data = {}
@@ -78,7 +80,7 @@ def scrape(studies_to_scrape, output_filename):
                 sample_dict = sample.attrib
                 uses = sample.findall("Uses")[0].findall("Use")
                 if len(uses) > 0:
-                    uses_as_string = '; '.join(list(map(lambda x: x.text, uses)))
+                    uses_as_string = "; ".join(list(map(lambda x: x.text, uses)))
                     sample_dict["sample_use"] = uses_as_string
                 sra_datas = sample.findall("SRAData")[0].findall("Stats")
                 sample_dict["sra_data_details"] = ""
@@ -93,7 +95,7 @@ def scrape(studies_to_scrape, output_filename):
                             stats_as_string = stats_as_string[:-1]
                         sra_data_details += "(" + stats_as_string + ") "
                     sample_dict["sra_data_details"] = sra_data_details
-                
+
                 sample_dict["study_accession"] = study_accession
                 if "consent_code" in sample_dict:
                     sample_dict["study_accession_with_consent"] = (
@@ -111,8 +113,14 @@ def scrape(studies_to_scrape, output_filename):
                         + " lacks a consent code. Leaving "
                         + "study_accession_with_consent and study_with_consent columns empty."
                     )
-                study_accession_w_version = '.'.join(sample_dict["study_accession"].split('.')[:-1])
-                sample_dict["datastage_subject_id"] = study_accession_w_version + "_" + sample_dict["submitted_subject_id"]
+                study_accession_w_version = ".".join(
+                    sample_dict["study_accession"].split(".")[:-1]
+                )
+                sample_dict["datastage_subject_id"] = (
+                    study_accession_w_version
+                    + "_"
+                    + sample_dict["submitted_subject_id"]
+                )
 
                 for field in field_names:
                     row.append(sample.attrib.get(field, ""))
@@ -176,7 +184,6 @@ def main():
     else:
         # Log to a time-stamped log file of the form extract-%m-%d-%Y-%H-%M-%S.log
         setup_logging(LOG_FILE)
-
 
     studies_to_scrape = []
     if args.study_accession_list is not None:

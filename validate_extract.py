@@ -12,7 +12,7 @@ def get_unique_accessions_from_input_PHS_list(filename):
     for accession in r:
         deduped_accessions[accession.strip()] = 1
 
-    sorted_unique_accessions = deduped_accessions.keys()
+    sorted_unique_accessions = list(deduped_accessions.keys())
     sorted_unique_accessions.sort()
     return sorted_unique_accessions
 
@@ -31,7 +31,7 @@ def get_unique_accessions_from_output_extract(filename):
             continue
         deduped_accessions[accession] = 1
 
-    sorted_unique_accessions = deduped_accessions.keys()
+    sorted_unique_accessions = list(deduped_accessions.keys())
     sorted_unique_accessions.sort()
     return sorted_unique_accessions
 
@@ -39,29 +39,29 @@ def get_unique_accessions_from_output_extract(filename):
 def main():
     parser = argparse.ArgumentParser(description="Validate dbgap extract file.")
     parser.add_argument(
-        "--input_file",
+        "--study_accession_list_filename",
         help="a file containing a newline-separated list of study accessions",
     )
-    parser.add_argument("--output_file", help="a generated extract file")
+    parser.add_argument("--dbgap_extract", help="a generated extract file")
 
     args = parser.parse_args(sys.argv[1:])
 
-    if args.input_file is None and args.output_file is None:
+    if args.study_accession_list_filename is None and args.dbgap_extract is None:
         print("-------")
         print("Usage:")
         print(
-            "> python validate_extract.py --input_file <phs_list.txt> --output_file <dbgap_extract_file.tsv>"
+            "> python validate_extract.py --study_accession_list_filename <phs_list.txt> --dbgap_extract <dbgap_extract_file.tsv>"
         )
         print("-------")
         exit(0)
 
-    input_file = args.input_file
-    output_file = args.output_file
-    accessions_from_input = get_unique_accessions_from_input_PHS_list(input_file)
+    study_accession_list_filename = args.study_accession_list_filename
+    dbgap_extract = args.dbgap_extract
+    accessions_from_input = get_unique_accessions_from_input_PHS_list(study_accession_list_filename)
 
-    accessions_from_output = get_unique_accessions_from_output_extract(output_file)
+    accessions_from_output = get_unique_accessions_from_output_extract(dbgap_extract)
 
-    print("Looking at input {} vs output {}".format(input_file, output_file))
+    print("Looking at input {} vs output {}".format(study_accession_list_filename, dbgap_extract))
     print("Input: ", accessions_from_input)
     print("Output: ", accessions_from_output)
 
