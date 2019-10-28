@@ -51,6 +51,7 @@ def scrape(studies_to_scrape, output_filename):
         "study_accession",
         "study_accession_with_consent",
         "study_with_consent",
+        "datastage_subject_id",
     ]
 
     if os.path.exists(output_filename):
@@ -75,6 +76,24 @@ def scrape(studies_to_scrape, output_filename):
             try:
                 row = []
                 sample_dict = sample.attrib
+                uses = sample.findall("Uses")[0].findall("Use")
+                if len(uses) > 0:
+                    uses_as_string = '; '.join(list(map(lambda x: x.text, uses)))
+                    sample_dict["sample_use"] = uses_as_string
+                sra_datas = sample.findall("SRAData")[0].findall("Stats")
+                sample_dict["sra_data_details"] = ""
+                if len(sra_datas) > 0:
+                    sra_data_details = ""
+                    for stat in sra_datas:
+                        stat_dict = stat.attrib
+                        stats_as_string = ""
+                        for key in stat_dict:
+                            stats_as_string += key + ":" + stat_dict[key] + "|"
+                        if stats_as_string[-1] == "|":
+                            stats_as_string = stats_as_string[:-1]
+                        sra_data_details += "(" + stats_as_string + ") "
+                    sample_dict["sra_data_details"] = sra_data_details
+                
                 sample_dict["study_accession"] = study_accession
                 if "consent_code" in sample_dict:
                     sample_dict["study_accession_with_consent"] = (
@@ -92,9 +111,12 @@ def scrape(studies_to_scrape, output_filename):
                         + " lacks a consent code. Leaving "
                         + "study_accession_with_consent and study_with_consent columns empty."
                     )
+                study_accession_w_version = '.'.join(sample_dict["study_accession"].split('.')[:-1])
+                sample_dict["datastage_subject_id"] = study_accession_w_version + "_" + sample_dict["submitted_subject_id"]
 
                 for field in field_names:
                     row.append(sample.attrib.get(field, ""))
+
                 sample_rows_to_write_for_this_study.append(row)
             except Exception as e:
                 logging.error(
@@ -141,7 +163,7 @@ def main():
             "> python dbgap_extract.py --study_accession_list_filename file.txt [--output_filename file_out.tsv]"
         )
         logging.debug("-------")
-        exit(0)
+        exit(1)
 
     output_filename = FILENAME + ".tsv"
     if args.output_filename is not None:
