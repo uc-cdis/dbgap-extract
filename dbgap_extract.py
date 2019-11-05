@@ -6,6 +6,7 @@ import sys
 from datetime import datetime
 import logging
 import os
+import queue
 
 FILENAME = "extract-" + datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
 REQUEST_URL = "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/GetSampleStatus.cgi?study_id={}&rettype=xml"
@@ -30,6 +31,85 @@ def setup_logging(log_filename):
     log.addHandler(logging.StreamHandler(sys.stdout))
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+
+def get_previous_version_of_study_accession(study_accession):
+    study_accession_split = study_accession.split(".")
+    version_number = int(study_accession_split[1][1:])
+    if version_number == 1:
+        # Can't go back any further
+        return -1
+    previous_version_of_study_accession = ".".join(
+        [
+            study_accession_split[0],
+            "v" + str(version_number - 1),
+            study_accession_split[2],
+        ]
+    )
+    return previous_version_of_study_accession
+
+
+def write_sample_rows_for_study(
+    study_accession, sample_elements, output_filename, field_names
+):
+    sample_rows_to_write_for_this_study = []
+    for sample in sample_elements:
+        try:
+            row = []
+            sample_dict = sample.attrib
+            uses = sample.findall("Uses")[0].findall("Use")
+            if len(uses) > 0:
+                uses_as_string = "; ".join(list(map(lambda x: x.text, uses)))
+                sample_dict["sample_use"] = uses_as_string
+            sra_datas = sample.findall("SRAData")[0].findall("Stats")
+            sample_dict["sra_data_details"] = ""
+            if len(sra_datas) > 0:
+                sra_data_details = ""
+                for stat in sra_datas:
+                    stat_dict = stat.attrib
+                    stats_as_string = ""
+                    for key in stat_dict:
+                        stats_as_string += key + ":" + stat_dict[key] + "|"
+                    if stats_as_string[-1] == "|":
+                        stats_as_string = stats_as_string[:-1]
+                    sra_data_details += "(" + stats_as_string + ") "
+                sample_dict["sra_data_details"] = sra_data_details
+
+            sample_dict["study_accession"] = study_accession
+            if "consent_code" in sample_dict:
+                sample_dict["study_accession_with_consent"] = (
+                    study_accession + ".c" + sample_dict.get("consent_code", "")
+                )
+                sample_dict["study_with_consent"] = (
+                    ".".join(study_accession.split(".")[:-2])
+                    + ".c"
+                    + sample_dict.get("consent_code", "")
+                )
+            else:
+                logging.debug(
+                    "Sample "
+                    + sample.attrib.get("submitted_sample_id", "")
+                    + " lacks a consent code. Leaving "
+                    + "study_accession_with_consent and study_with_consent columns empty."
+                )
+            study_accession_w_version = ".".join(
+                sample_dict["study_accession"].split(".")[:-1]
+            )
+            sample_dict["datastage_subject_id"] = (
+                study_accession_w_version + "_" + sample_dict["submitted_subject_id"]
+            )
+
+            for field in field_names:
+                row.append(sample.attrib.get(field, ""))
+
+            sample_rows_to_write_for_this_study.append(row)
+        except Exception as e:
+            logging.error(
+                "Error processing sample "
+                + sample.attrib.get("submitted_sample_id", "")
+            )
+            logging.error(e)
+    write_list_of_rows_to_tsv(sample_rows_to_write_for_this_study, output_filename)
 
 
 def scrape(studies_to_scrape, output_filename):
@@ -61,7 +141,13 @@ def scrape(studies_to_scrape, output_filename):
 
     write_list_of_rows_to_tsv([field_names], output_filename)
 
-    for study_accession in studies_to_scrape:
+    # Use a queue to make it appropriate to modify the list during iteration
+    q = queue.Queue()
+    [q.put(s) for s in studies_to_scrape]
+    already_seen = []
+
+    while not q.empty():
+        study_accession = q.get_nowait()
         request_url = REQUEST_URL.format(study_accession)
         try:
             r = requests.get(request_url)
@@ -73,66 +159,29 @@ def scrape(studies_to_scrape, output_filename):
         study_accession = root.findall("Study")[0].attrib["accession"]
         sample_list_element = root.findall("Study")[0].findall("SampleList")[0]
         sample_elements = sample_list_element.findall("Sample")
-        sample_rows_to_write_for_this_study = []
-        for sample in sample_elements:
-            try:
-                row = []
-                sample_dict = sample.attrib
-                uses = sample.findall("Uses")[0].findall("Use")
-                if len(uses) > 0:
-                    uses_as_string = "; ".join(list(map(lambda x: x.text, uses)))
-                    sample_dict["sample_use"] = uses_as_string
-                sra_datas = sample.findall("SRAData")[0].findall("Stats")
-                sample_dict["sra_data_details"] = ""
-                if len(sra_datas) > 0:
-                    sra_data_details = ""
-                    for stat in sra_datas:
-                        stat_dict = stat.attrib
-                        stats_as_string = ""
-                        for key in stat_dict:
-                            stats_as_string += key + ":" + stat_dict[key] + "|"
-                        if stats_as_string[-1] == "|":
-                            stats_as_string = stats_as_string[:-1]
-                        sra_data_details += "(" + stats_as_string + ") "
-                    sample_dict["sra_data_details"] = sra_data_details
 
-                sample_dict["study_accession"] = study_accession
-                if "consent_code" in sample_dict:
-                    sample_dict["study_accession_with_consent"] = (
-                        study_accession + ".c" + sample_dict.get("consent_code", "")
+        if len(sample_elements) == 0:
+            previous_version_of_study_accession = get_previous_version_of_study_accession(
+                study_accession
+            )
+            if previous_version_of_study_accession != -1:
+                q.put_nowait(previous_version_of_study_accession)
+                logging.debug(
+                    "\nStudy accession {} lacks samples. Going back a version.".format(
+                        study_accession
                     )
-                    sample_dict["study_with_consent"] = (
-                        ".".join(study_accession.split(".")[:-2])
-                        + ".c"
-                        + sample_dict.get("consent_code", "")
+                )
+            else:
+                logging.debug(
+                    "\nCould not find samples for any version of study accession {}.".format(
+                        study_accession
                     )
-                else:
-                    logging.debug(
-                        "Sample "
-                        + sample.attrib.get("submitted_sample_id", "")
-                        + " lacks a consent code. Leaving "
-                        + "study_accession_with_consent and study_with_consent columns empty."
-                    )
-                study_accession_w_version = ".".join(
-                    sample_dict["study_accession"].split(".")[:-1]
                 )
-                sample_dict["datastage_subject_id"] = (
-                    study_accession_w_version
-                    + "_"
-                    + sample_dict["submitted_subject_id"]
-                )
-
-                for field in field_names:
-                    row.append(sample.attrib.get(field, ""))
-
-                sample_rows_to_write_for_this_study.append(row)
-            except Exception as e:
-                logging.error(
-                    "Error processing sample "
-                    + sample.attrib.get("submitted_sample_id", "")
-                )
-                logging.error(e)
-        write_list_of_rows_to_tsv(sample_rows_to_write_for_this_study, output_filename)
+        elif study_accession not in already_seen:
+            write_sample_rows_for_study(
+                study_accession, sample_elements, output_filename, field_names
+            )
+            already_seen.append(study_accession)
 
 
 def write_list_of_rows_to_tsv(rows, output_filename):
