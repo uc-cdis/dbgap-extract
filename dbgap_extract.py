@@ -166,8 +166,8 @@ def scrape(studies_to_scrape, output_filename):
             )
             if previous_version_of_study_accession != -1:
                 q.put_nowait(previous_version_of_study_accession)
-                logging.debug(
-                    "\nStudy accession {} lacks samples. Going back a version.".format(
+                logging.error(
+                    "\nERROR: Study accession {} lacks samples. Going back a version.".format(
                         study_accession
                     )
                 )
