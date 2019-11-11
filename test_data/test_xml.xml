@@ -1,0 +1,28 @@
+<DbGap xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.ncbi.nlm.nih.gov/projects/gap/xsd/dbGaPSample.xsd">
+    <Study accession="phs001234.v3.p1" study_handle="ABC" study_name="ABCD" registration_status="completed_by_gpa" has_sra="true" ic="NHLBI">
+        <BioProjects>
+            <BioProject bp_id="PRJNA325183" bp_type="admin"/>
+            <BioProject bp_id="PRJNA325184" bp_type="data"/>
+        </BioProjects>
+        <SampleList>
+            <Sample repository="CDE" submitted_sample_id="NWD1" biosample_id="SAMN1" submitted_subject_id="ABC" dbgap_sample_id="1" dbgap_subject_id="1" sra_sample_id="SRS1" consent_code="1" consent_short_name="GRU-IRB" sex="male" body_site="Whole blood" analyte_type="DNA" dbgap_status="Loaded">
+                <Uses>
+                    <Use>Seq_DNA_SNP_CNV</Use>
+                    <Use>WGS</Use>
+                </Uses>
+                <SRAData>
+                    <Stats status="public" experiments="1" runs="3" bases="406977793500" size_Gb="74" experiment_type="WGS" platform="ILLUMINA" center="ABC Fast Track Services"/>
+                </SRAData>
+            </Sample>
+            <Sample repository="FGH" submitted_sample_id="NWD1" biosample_id="SAMN2" submitted_subject_id="CDE" dbgap_sample_id="1" dbgap_subject_id="2" sra_sample_id="SRS2" consent_code="1" consent_short_name="GRU-IRB" sex="female" body_site="Whole blood" analyte_type="DNA" dbgap_status="Loaded">
+                <Uses>
+                    <Use>Seq_DNA_SNP_CWB</Use>
+                    <Use>GWS</Use>
+                </Uses>
+                <SRAData>
+                    <Stats status="public" experiments="1" runs="2" bases="250660703000" size_Gb="49" experiment_type="WGS" platform="ILLUMINA" center="CDE Fast Track Services"/>
+                </SRAData>
+            </Sample>
+        </SampleList>
+    </Study>
+</DbGap>
