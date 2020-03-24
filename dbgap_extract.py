@@ -158,7 +158,7 @@ def _get_previous_version_of_study_accession(study_accession):
     return previous_version_of_study_accession
 
 
-def get_flattened_sample_use_from_xml_sample(sample):
+def _get_flattened_sample_use_from_xml_sample(sample):
     """
     Get sample use details as a string similar to how it's represented on
     the dbGaP site
