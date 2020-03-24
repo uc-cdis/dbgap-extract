@@ -32,7 +32,7 @@ FIELD_NAMES = [
     "study_accession",
     "study_accession_with_consent",
     "study_with_consent",
-    "datastage_subject_id",
+    "study_subject_id",
 ]
 
 
@@ -49,6 +49,11 @@ def main():
     )
     parser.add_argument(
         "--output_filename", help="optionally specify a name for the output file"
+    )
+    parser.add_argument(
+        "--expand_sra_details",
+        help="whether or to expand SRA details into a dict. defaults to flattening",
+        action="store_true",
     )
 
     args = parser.parse_args(sys.argv[1:])
@@ -94,7 +99,7 @@ def main():
         + " ".join(studies_to_scrape)
     )
 
-    scrape(studies_to_scrape, output_filename)
+    scrape(studies_to_scrape, output_filename, args)
 
     logging.debug(
         "All done. Extracted elements to {}. Logged info to {}".format(
@@ -104,6 +109,12 @@ def main():
 
 
 def setup_logging(log_filename):
+    """
+    Prep the output file for the log and setup the log handling
+
+    Args:
+        log_filename (str): file name for output log file
+    """
     global LOG_FILE
     LOG_FILE = log_filename
     if os.path.exists(LOG_FILE):
@@ -122,7 +133,16 @@ def setup_logging(log_filename):
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-def get_previous_version_of_study_accession(study_accession):
+def _get_previous_version_of_study_accession(study_accession):
+    """
+    Get the previous version of a given study accession by attemping to walk backwards
+
+    Args:
+        study_accession (str): current study accession number / phsid
+
+    Returns:
+        str: previous version of study accession number
+    """
     study_accession_split = study_accession.split(".")
     version_number = int(study_accession_split[1][1:])
     if version_number == 1:
@@ -138,7 +158,17 @@ def get_previous_version_of_study_accession(study_accession):
     return previous_version_of_study_accession
 
 
-def get_sample_use_from_xml_sample(sample):
+def get_flattened_sample_use_from_xml_sample(sample):
+    """
+    Get sample use details as a string similar to how it's represented on
+    the dbGaP site
+
+    Args:
+        sample (xml.etree.ElementTree.Element): sample element from XML tree
+
+    Returns:
+        str: SRA details as a string
+    """
     uses = sample.findall("Uses")[0].findall("Use")
     uses_as_string = ""
     if len(uses) > 0:
@@ -146,7 +176,17 @@ def get_sample_use_from_xml_sample(sample):
     return uses_as_string
 
 
-def get_sra_data_details_from_xml_sample(sample):
+def _get_flattened_sra_data_details_from_xml_sample(sample):
+    """
+    Get SRA details as a string similar to how it's represented on
+    the dbGaP site
+
+    Args:
+        sample (xml.etree.ElementTree.Element): sample element from XML tree
+
+    Returns:
+        str: SRA details as a string
+    """
     sra_datas = sample.findall("SRAData")[0].findall("Stats")
     sra_data_details = ""
     if len(sra_datas) > 0:
@@ -161,10 +201,49 @@ def get_sra_data_details_from_xml_sample(sample):
     return sra_data_details
 
 
-def get_sample_dict_from_xml_sample(study_accession, sample):
+def _get_sra_data_details_from_xml_sample(sample):
+    """
+    Get SRA details as a dictionary
+
+    Args:
+        sample (xml.etree.ElementTree.Element): sample element from XML tree
+
+    Returns:
+        dict: SRA details as a dict
+    """
+    sra_datas = sample.findall("SRAData")[0].findall("Stats")
+    sra_data_details = {}
+    if len(sra_datas) > 0:
+        for stat in sra_datas:
+            stat_dict = stat.attrib
+            sra_data_details.update(stat_dict)
+    return sra_data_details
+
+
+def get_sample_dict_from_xml_sample(study_accession, sample, args):
+    """
+    Get dictionary of sample from the XML sample
+
+    Args:
+        study_accession (str): the study phsid/accession number
+        sample (xml.etree.ElementTree.Element): sample element from XML tree
+        args (argparse.Namespace): arguments sent to command line
+
+    Returns:
+        dict: SRA details as a dict
+    """
     sample_dict = sample.attrib
-    sample_dict["sample_use"] = get_sample_use_from_xml_sample(sample)
-    sample_dict["sra_data_details"] = get_sra_data_details_from_xml_sample(sample)
+
+    sample_dict["sample_use"] = [
+        use.text for use in sample.findall("Uses")[0].findall("Use")
+    ]
+
+    if args.expand_sra_details:
+        sample_dict["sra_data_details"] = _get_sra_data_details_from_xml_sample(sample)
+    else:
+        sample_dict[
+            "sra_data_details"
+        ] = _get_flattened_sra_data_details_from_xml_sample(sample)
 
     sample_dict["study_accession"] = study_accession
     if "consent_code" in sample_dict:
@@ -184,18 +263,29 @@ def get_sample_dict_from_xml_sample(study_accession, sample):
             + "study_accession_with_consent and study_with_consent columns empty."
         )
     study_accession_w_version = ".".join(sample_dict["study_accession"].split(".")[:-1])
-    sample_dict["datastage_subject_id"] = (
+    sample_dict["study_subject_id"] = (
         study_accession_w_version + "_" + sample_dict["submitted_subject_id"]
     )
     return sample_dict
 
 
-def write_sample_rows_for_study(study_accession, sample_elements, output_filename):
+def write_sample_rows_for_study(
+    study_accession, sample_elements, output_filename, args
+):
+    """
+    Write rows to the output file for the samples provided.
+
+    Args:
+        study_accession (str): the study phsid/accession number
+        sample (xml.etree.ElementTree.Element): sample element from XML tree
+        output_filename (str): output file name to write to
+        args (argparse.Namespace): arguments sent to command line
+    """
     sample_rows_to_write_for_this_study = []
     for sample in sample_elements:
         try:
             row = []
-            sample_dict = get_sample_dict_from_xml_sample(study_accession, sample)
+            sample_dict = get_sample_dict_from_xml_sample(study_accession, sample, args)
 
             for field in FIELD_NAMES:
                 row.append(sample_dict.get(field, ""))
@@ -210,7 +300,16 @@ def write_sample_rows_for_study(study_accession, sample_elements, output_filenam
     write_list_of_rows_to_tsv(sample_rows_to_write_for_this_study, output_filename)
 
 
-def scrape(studies_to_scrape, output_filename):
+def scrape(studies_to_scrape, output_filename, args):
+    """
+    Scrape dbGaP for the given studies and write TSV output to the filename
+    provided.
+
+    Args:
+        studies_to_scrape (List[str]): the list of study phsid/accession numbers
+        output_filename (str): output file name to write to
+        args (argparse.Namespace): arguments sent to command line
+    """
     study_data = {}
 
     if os.path.exists(output_filename):
@@ -238,7 +337,7 @@ def scrape(studies_to_scrape, output_filename):
         sample_elements = sample_list_element.findall("Sample")
 
         if len(sample_elements) == 0:
-            previous_version_of_study_accession = get_previous_version_of_study_accession(
+            previous_version_of_study_accession = _get_previous_version_of_study_accession(
                 study_accession
             )
             if previous_version_of_study_accession:
@@ -256,16 +355,24 @@ def scrape(studies_to_scrape, output_filename):
                 )
         elif study_accession not in already_seen:
             write_sample_rows_for_study(
-                study_accession, sample_elements, output_filename
+                study_accession, sample_elements, output_filename, args
             )
             already_seen.append(study_accession)
 
 
 def write_list_of_rows_to_tsv(rows, output_filename):
+    """
+    Write the given rows to the output file.
+
+    Args:
+        rows (List[str]): list of rows to write to file
+        output_filename (str): output file name to write to
+    """
     with open(output_filename, "a+") as out_file:
         tsv_writer = csv.writer(out_file, delimiter="\t")
         for row in rows:
             tsv_writer.writerow(row)
+
 
 if __name__ == "__main__":
     main()
