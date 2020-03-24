@@ -1,0 +1,41 @@
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6]
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install pipenv
+      run: |
+        echo installing pipenv
+        curl https://raw.githubusercontent.com/kennethreitz/pipenv/master/get-pipenv.py | python || pip install pipenv
+    - name: Install depenedencies
+      run: |
+        echo installing deps using pipenv
+        pipenv install --dev
+    - name: Running tests
+      run: |
+        echo installing deps using pipenv
+        pipenv run python -m pytest tests.py
+
