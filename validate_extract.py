@@ -57,11 +57,17 @@ def main():
 
     study_accession_list_filename = args.study_accession_list_filename
     dbgap_extract = args.dbgap_extract
-    accessions_from_input = get_unique_accessions_from_input_PHS_list(study_accession_list_filename)
+    accessions_from_input = get_unique_accessions_from_input_PHS_list(
+        study_accession_list_filename
+    )
 
     accessions_from_output = get_unique_accessions_from_output_extract(dbgap_extract)
 
-    print("Looking at input {} vs output {}".format(study_accession_list_filename, dbgap_extract))
+    print(
+        "Looking at input {} vs output {}".format(
+            study_accession_list_filename, dbgap_extract
+        )
+    )
     print("Input: ", accessions_from_input)
     print("Output: ", accessions_from_output)
 

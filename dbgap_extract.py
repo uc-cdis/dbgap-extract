@@ -6,6 +6,7 @@ import sys
 from datetime import datetime
 import logging
 import os
+import json
 import queue
 
 FILENAME = "extract-" + datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
@@ -217,7 +218,8 @@ def _get_sra_data_details_from_xml_sample(sample):
         for stat in sra_datas:
             stat_dict = stat.attrib
             sra_data_details.update(stat_dict)
-    return sra_data_details
+    sra_details = json.dumps(sra_data_details).replace('""', '"')
+    return sra_details
 
 
 def get_sample_dict_from_xml_sample(study_accession, sample, args):
@@ -234,9 +236,9 @@ def get_sample_dict_from_xml_sample(study_accession, sample, args):
     """
     sample_dict = sample.attrib
 
-    sample_dict["sample_use"] = [
-        use.text for use in sample.findall("Uses")[0].findall("Use")
-    ]
+    sample_dict["sample_use"] = json.dumps(
+        [use.text for use in sample.findall("Uses")[0].findall("Use")]
+    )
 
     if args.expand_sra_details:
         sample_dict["sra_data_details"] = _get_sra_data_details_from_xml_sample(sample)
