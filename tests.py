@@ -3,6 +3,7 @@
 
 import sys
 import pytest
+import json
 import filecmp
 import dbgap_extract
 import argparse
@@ -94,6 +95,7 @@ def test_get_sample_dict_from_xml_sample():
     sample_dict = dbgap_extract.get_sample_dict_from_xml_sample(
         "phs001234.v3.p1", sample_elements[0], args
     )
+    sample_dict["sample_use"] = json.loads(sample_dict["sample_use"])
     assert_dict_equality(sample_dict, expected_sample_dict)
 
     expected_sample_dict = {
@@ -120,6 +122,7 @@ def test_get_sample_dict_from_xml_sample():
     sample_dict = dbgap_extract.get_sample_dict_from_xml_sample(
         "phs001234.v3.p1", sample_elements[1], args
     )
+    sample_dict["sample_use"] = json.loads(sample_dict["sample_use"])
     assert_dict_equality(sample_dict, expected_sample_dict)
 
 
@@ -160,6 +163,8 @@ def test_get_sample_dict_sra_expand_from_xml_sample():
     sample_dict = dbgap_extract.get_sample_dict_from_xml_sample(
         "phs001234.v3.p1", sample_elements[0], args
     )
+    sample_dict["sample_use"] = json.loads(sample_dict["sample_use"])
+    sample_dict["sra_data_details"] = json.loads(sample_dict["sra_data_details"])
     assert_dict_equality(sample_dict, expected_sample_dict)
 
     expected_sample_dict = {
@@ -195,4 +200,6 @@ def test_get_sample_dict_sra_expand_from_xml_sample():
     sample_dict = dbgap_extract.get_sample_dict_from_xml_sample(
         "phs001234.v3.p1", sample_elements[1], args
     )
+    sample_dict["sample_use"] = json.loads(sample_dict["sample_use"])
+    sample_dict["sra_data_details"] = json.loads(sample_dict["sra_data_details"])
     assert_dict_equality(sample_dict, expected_sample_dict)
