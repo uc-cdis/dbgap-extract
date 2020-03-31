@@ -37,5 +37,5 @@ jobs:
     - name: Running tests
       run: |
         echo installing deps using pipenv
-        pipenv run python -m pytest tests.py
+        pipenv run python -m pytest tests.py -vv
 

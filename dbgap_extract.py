@@ -159,24 +159,6 @@ def _get_previous_version_of_study_accession(study_accession):
     return previous_version_of_study_accession
 
 
-def _get_flattened_sample_use_from_xml_sample(sample):
-    """
-    Get sample use details as a string similar to how it's represented on
-    the dbGaP site
-
-    Args:
-        sample (xml.etree.ElementTree.Element): sample element from XML tree
-
-    Returns:
-        str: SRA details as a string
-    """
-    uses = sample.findall("Uses")[0].findall("Use")
-    uses_as_string = ""
-    if len(uses) > 0:
-        uses_as_string = "; ".join(list(map(lambda x: x.text, uses)))
-    return uses_as_string
-
-
 def _get_flattened_sra_data_details_from_xml_sample(sample):
     """
     Get SRA details as a string similar to how it's represented on
