@@ -49,7 +49,7 @@ def test_get_sra_data_details_from_xml_sample():
     )
     assert (
         sra_data_details
-        == "(status:public|experiments:1|runs:3|bases:406977793500|size_Gb:74|experiment_type:WGS|platform:ILLUMINA|center:ABC Fast Track Services) "
+        == "(bases:406977793500|center:ABC Fast Track Services|experiment_type:WGS|experiments:1|platform:ILLUMINA|runs:3|size_Gb:74|status:public) "
     )
 
     sra_data_details = dbgap_extract._get_flattened_sra_data_details_from_xml_sample(
@@ -57,7 +57,7 @@ def test_get_sra_data_details_from_xml_sample():
     )
     assert (
         sra_data_details
-        == "(status:public|experiments:1|runs:2|bases:250660703000|size_Gb:49|experiment_type:WGS|platform:ILLUMINA|center:CDE Fast Track Services) "
+        == "(bases:250660703000|center:CDE Fast Track Services|experiment_type:WGS|experiments:1|platform:ILLUMINA|runs:2|size_Gb:49|status:public) "
     )
 
 
@@ -86,7 +86,7 @@ def test_get_sample_dict_from_xml_sample():
         "analyte_type": "DNA",
         "dbgap_status": "Loaded",
         "sample_use": ["Seq_DNA_SNP_CNV", "WGS"],
-        "sra_data_details": "(status:public|experiments:1|runs:3|bases:406977793500|size_Gb:74|experiment_type:WGS|platform:ILLUMINA|center:ABC Fast Track Services) ",
+        "sra_data_details": "(bases:406977793500|center:ABC Fast Track Services|experiment_type:WGS|experiments:1|platform:ILLUMINA|runs:3|size_Gb:74|status:public) ",
         "study_accession": "phs001234.v3.p1",
         "study_accession_with_consent": "phs001234.v3.p1.c1",
         "study_with_consent": "phs001234.c1",
@@ -113,7 +113,7 @@ def test_get_sample_dict_from_xml_sample():
         "analyte_type": "DNA",
         "dbgap_status": "Loaded",
         "sample_use": ["Seq_DNA_SNP_CWB", "GWS"],
-        "sra_data_details": "(status:public|experiments:1|runs:2|bases:250660703000|size_Gb:49|experiment_type:WGS|platform:ILLUMINA|center:CDE Fast Track Services) ",
+        "sra_data_details": "(bases:250660703000|center:CDE Fast Track Services|experiment_type:WGS|experiments:1|platform:ILLUMINA|runs:2|size_Gb:49|status:public) ",
         "study_accession": "phs001234.v3.p1",
         "study_accession_with_consent": "phs001234.v3.p1.c1",
         "study_with_consent": "phs001234.c1",

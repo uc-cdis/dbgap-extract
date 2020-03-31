@@ -176,7 +176,7 @@ def _get_flattened_sra_data_details_from_xml_sample(sample):
         for stat in sra_datas:
             stat_dict = stat.attrib
             stats_as_string = ""
-            for key in stat_dict:
+            for key in {k: stat_dict[k] for k in sorted(stat_dict)}:
                 stats_as_string += key + ":" + stat_dict[key] + "|"
             if stats_as_string[-1] == "|":
                 stats_as_string = stats_as_string[:-1]
