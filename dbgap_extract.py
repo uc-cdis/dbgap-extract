@@ -10,7 +10,7 @@ import json
 import queue
 
 FILENAME = "extract-" + datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
-REQUEST_URL = "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/GetSampleStatus.cgi?study_id={}&rettype=xml"
+REQUEST_URL = os.environ.get('DBGAP_STUDY_ENDPOINT', 'https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/GetSampleStatus.cgi?study_id={}&rettype=xml')
 LOG_FILE = FILENAME + ".log"
 logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG)
 
