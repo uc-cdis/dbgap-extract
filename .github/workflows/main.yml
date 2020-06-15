@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6]
+        python-version: [3.6.9, 3.6.10, 3.6]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
